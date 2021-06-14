@@ -1,0 +1,184 @@
+<!doctype html>
+<title>New Papers</title>
+<style>
+  body {
+    margin: 0;
+    background-color: #F0FFFF;
+  }
+  .navbar {
+    height: 60px;
+    background-color: #A7C7E7;
+    text-align: center;
+  }
+  .navbar div {
+    display: inline-block;
+    font-size: 24px;
+    padding-top: 14px;
+    color: #191970;
+    font-family: Bogle;
+  }
+  .navbar div:nth-child(2) {
+    font-weight: bold;
+  }
+  .container {
+    margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  textarea {
+    width: 50%;
+    height: 100px;
+    align-self: center;
+    margin-bottom: 10px;
+  }
+  button {
+    cursor: pointer;
+    color: #fff;
+    background-color: #343a40;
+    border-color: #343a40;
+    align-self: center;
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  }
+  .num-papers {
+    align-self: center;
+    font-size: 20px;
+    margin-top: 20px;
+  }
+  .paper-list {
+    display: none;
+    list-style: none;
+    border: 1px solid #e4e4e4;
+    border-radius: 10px;
+    width: 55%;
+    align-self: center;
+    font-size: 20px;
+    padding: 14px;
+  }
+  .item {
+    margin-bottom: 10px;
+  }
+  .item-id {
+    color: gray;
+    font-size: 22px;
+  }
+  .item-title {
+    font-weight: bold;
+    font-size: 22px;
+    width: 900px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .item-abstract {
+
+  }
+  .error {
+    display: none;
+    align-self: center;
+    font-size: 20px;
+    margin-top: 20px;
+  }
+</style>
+
+<div class="navbar">
+  <div>Find</div>
+  <div>New Papers</div>
+</div>
+
+<div class="container">
+  <textarea id="abstractInput"></textarea>
+  <button type="submit" id="searchBtn">Search</button>
+
+  <div class="num-papers"></div>
+  <ul class="paper-list"></ul>
+  <div class="error">The search yielded no papers!</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const cache = {};
+
+    /**
+     * creates a new `li` element containing the link on the paper's id along with paper title
+     * and the abstract
+     */
+    const getPaperItem = (paper, isLastItem) => {
+      const liEl = $('<li class="item"></li>');
+
+      liEl.append($(`<div style="inline-flex">
+        <a class="item-id" href="https://arxiv.org/abs/${paper.id}" target="_blank">${paper.id}</a>
+        <span class="item-title">${paper.title}</span>
+      </div>`));
+
+      liEl.append(`<div class="item-abstract">${paper.abstract}</div>`);
+
+      if (!isLastItem) liEl.append('<hr />');
+
+      return liEl;
+    };
+
+    /**
+     * loop over each paper to show each paper's content
+     */
+    const loadSimilarPapers = (papers) => {
+      $('.paper-list').html('');
+
+      if (papers.length) {
+        $('.paper-list').show();
+        $('.num-papers').text(`Found ${papers.length} similar papers:`);
+        $('.error').hide();
+      } else {
+        $('.error').show();
+        $('.error').text('The search yielded no papers!');
+      }
+
+      papers.forEach((paper, idx) => {
+        $('.paper-list').append(getPaperItem(paper, idx === papers.length - 1));
+      });
+    };
+
+    /**
+     * fetch related articles using abstract text as data for the AJAX request
+     */
+    $('#searchBtn').on("click", () => {
+      const abstractText = $('#abstractInput').val();
+      if (!abstractText) return;
+
+      if (cache[abstractText]) {
+        loadSimilarPapers(cache[abstractText]);
+        return;
+      }
+
+      $.ajax({
+        url: "/search",
+        method: "POST",
+        data: JSON.stringify({ abstract: abstractText }),
+        headers: { "Content-Type": "application/json" },
+        success: (data) => {
+          const papers = JSON.parse(data);
+          loadSimilarPapers(papers);
+          cache[abstractText] = papers;
+        },
+        error: (err) => {
+          $('.error').show();
+          $('.error').text("Something went wrong! Please try again later...");
+        }
+      });
+    });
+  });
+</script>
