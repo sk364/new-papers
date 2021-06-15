@@ -83,8 +83,8 @@
     text-overflow: ellipsis;
     overflow: hidden;
   }
-  .item-abstract {
-
+  .item-category {
+    color: gray;
   }
   .error {
     display: none;
@@ -120,9 +120,12 @@
     const getPaperItem = (paper, isLastItem) => {
       const liEl = $('<li class="item"></li>');
 
+      const categories = paper.general_category.split(' ').map(it => { return `#${it}`; }).join(" ");
+
       liEl.append($(`<div style="inline-flex">
         <a class="item-id" href="https://arxiv.org/abs/${paper.id}" target="_blank">${paper.id}</a>
         <span class="item-title">${paper.title}</span>
+        <span class="item-category">${categories}</span>
       </div>`));
 
       liEl.append(`<div class="item-abstract">${paper.abstract}</div>`);
