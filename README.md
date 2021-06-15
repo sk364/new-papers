@@ -1,5 +1,5 @@
 # New Papers
-A recommendation and categorization application to categorize and suggest related research papers, given an abstract.
+A recommendation application to suggest related research papers, given an abstract.
 
 ![screenshot](./assets/screenshot.png?raw=true "Screenshot")
 
