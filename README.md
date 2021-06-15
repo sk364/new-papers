@@ -1,12 +1,13 @@
 # New Papers
 A recommendation and categorization application to categorize and suggest related research papers, given an abstract.
 
-!TODO: add screenshots
+![screenshot](screenshot.png?raw=true "Screenshot")
 
 ## Table of Contents
 
 * [Installation](#installation)
-* [Files & Data](#files)
+* [How to Run?](#run)
+* [Files](#files)
 * [Overview & Motivation](#overview)
 * [Analysis](#analysis)
 * [Conclusion](#conclusion)
@@ -20,16 +21,29 @@ Python version required is `>=3.7`. Below are the libraries used:
 * scikit-learn
 * dask
 * nltk
-* matplotlib
 * flask
 
 Install all libraries using this command: `pip install -r requirements.txt`.
 
-## Files & Data<a name="files"></a>
+## How to Run?<a name="run"></a>
 
-The repository hosts a Flask app which structures the project in the following image showing a tree:
+* Clone the repository.
+* Create directories `data` & `models`, if not already present.
+* Download the dataset from [here](https://www.kaggle.com/Cornell-University/arxiv) and move it inside the `data` directory naming it `dataset.json`.
+* Run the application: `flask run`
+* Go to `http://localhost:5000/setup` to setup the data models.
+* Now, navigate to `http://localhost:5000/` and the app is ready to serve!
 
-!TODO: add image
+## Files<a name="files"></a>
+
+The following is the list of files hosted in this repository:
+
+* `app.py`: flask application module containing the routes
+* `templates`: directory containing the HTML files
+* `etl.py`: data processing module
+* `requirements.txt`: project requirements
+* `models`: directory containing the processed data and models
+* `data`: directory containing the dataset JSON file
 
 ## Overview & Motivation<a name="overview"></a>
 
