@@ -19,8 +19,8 @@ MATRIX_SAVE_PATH = "models/matrix.pkl"
 VECTORIZER_SAVE_PATH = "models/vectorizer.pkl"
 DATAFRAME_SAVE_PATH = "models/df.json"
 MIN_YEAR = 2019
-MAX_PAPERS = 1000000
-NUM_TOP_ITEMS = 100
+MAX_PAPERS = 100000
+NUM_TOP_ITEMS = 101
 
 
 def tokenize(text):
@@ -77,11 +77,16 @@ def filter_data(data):
         'abstract': item['abstract']
     }
 
-    return pd.DataFrame(
-        random.sample(
-            data.filter(filter_lambda).map(trim_lambda), MAX_PAPERS
-        ).compute()
-    )
+    sample_size = MAX_PAPERS
+    while True:
+        try:
+            return pd.DataFrame(
+                random.sample(
+                    data.filter(filter_lambda).map(trim_lambda), sample_size
+                ).compute()
+            )
+        except:
+            sample_size /= 10
 
 
 def clean_data(df):
@@ -161,6 +166,30 @@ def get_similar_papers(abstract):
     return similar_items
 
 
+def setup():
+    """Load, preprocess and save the formatted data"""
+    start_time = time.time()
+
+    nltk.download([
+        'punkt',
+        'stopwords',
+        'wordnet',
+        'averaged_perceptron_tagger'
+    ])
+
+    print("Loading data...")
+    documents = load_data_from_json(DATASET_FILE_PATH)
+
+    df = filter_data(documents)
+    df = clean_data(df)
+
+    print("Saving processed data...")
+    preprocess(df)
+
+    print("Successfully saved data in `models` directory")
+    print(f"Took {time.time() - start_time} seconds")
+
+
 if __name__ == "__main__":
     args = sys.argv
 
@@ -169,25 +198,6 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     if args[1] == "setup":
-        start_time = time.time()
-
-        nltk.download([
-            'punkt',
-            'stopwords',
-            'wordnet',
-            'averaged_perceptron_tagger'
-        ])
-
-        print("Loading data...")
-        documents = load_data_from_json(DATASET_FILE_PATH)
-
-        df = filter_data(documents)
-        df = clean_data(df)
-
-        print("Saving processed data...")
-        preprocess(df)
-
-        print("Successfully saved data in `models` directory")
-        print(f"Took {time.time() - start_time} seconds")
+        setup()
     else:
         print('Usage: python etl.py setup')
