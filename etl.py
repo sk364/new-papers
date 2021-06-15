@@ -78,7 +78,7 @@ def filter_data(data):
     }
 
     sample_size = MAX_PAPERS
-    while True:
+    while sample_size != 0:
         try:
             return pd.DataFrame(
                 random.sample(
