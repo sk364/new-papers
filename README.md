@@ -1,5 +1,5 @@
 # New Papers
-A recommendation application to suggest related research papers, given an abstract.
+A recommendation and categorization application to suggest related research papers, given an abstract.
 
 ![screenshot](./assets/screenshot.png?raw=true "Screenshot")
 
@@ -53,25 +53,19 @@ The following is the list of files hosted in this repository:
 
 A research paper is a piece of academic writing containing original research results or an interpretation of existing results. The papers, even just the abstract text, are many a times really long and complex to understand, in the first glance. Basically, it's a time-intensive process. While there are softwares which can auto-summarize articles, it still takes a good amount of effort to go through a vast number of articles to find which are related to the paper in question.
 
-This project attempts to solve the problem of sifting through a myriad number of articles to filter the relevant articles for the study, by exposing a web application in which the user can provide an abstract of an article to get a list of related articles. The application uses the [arXiv research paper dataset](https://www.kaggle.com/Cornell-University/arxiv) to perform content-based filtering to recommend the related articles.
+This project attempts to solve the problem of sifting through a myriad number of articles to filter the relevant articles for the study, by exposing a web application in which the user can provide an abstract of an article to get a list of related articles and the categories associated to it. The application uses the [arXiv research paper dataset](https://www.kaggle.com/Cornell-University/arxiv) to perform knowledge-based recommendations.
 
 ## Problem Statement<a name="statement"></a>
 
-The goal of the project is to create a web application to help users find similar articles, given a piece of text. The application is expected to be useful for conducting literature reviews, finding correlation between past researches and the user's own research, etc.
+The goal of the project is to create a web application to help users find similar articles and the associated categories, given a piece of text. The application is expected to be useful for conducting literature reviews, finding correlation between past researches and the user's own research, etc.
 
 ## Metrics<a name="metrics"></a>
 
-The project evaluates the recommendations based on the criteria of score being greater than the set threshold.
-For this project, setting the threshold to 0.50 for a score ranging between 0 and 1 (both inclusive). Since all documents are compared with a single document, zero score documents will be filtered out and will not be considered as retrieved documents.
+The project evaluates the model on `precision`, `recall` and `f1 score`, where
 
-To evaluate the application, a custom metric "quality" is used as there are no pre-existing ratings to judge the results using train-test approach in this knowledge-based recommendation engine.
-Using the above threshold value, `quality` of the search results is defined as the fraction of documents above threshold over the total number of documents.
-
-`Quality` = # of documents above threshold / total # of documents
-
-Another useful metric to evaluate the performance is the search time to find the similar articles.
-
-`Search time` = the number of seconds it takes to find and generate a list of articles (excluding the web processing delays).
+* Precision = True Positives / (True Positives + False Positives)
+* Recall = True Positives / (True Positives + False Negatives)
+* F1-score = (2 * Precision * Recall) / (Precision + Recall)
 
 ## Analysis<a name="analysis"></a>
 
@@ -120,24 +114,55 @@ Most number of papers are tagged with Computer Science and Mathematics by a real
 
 ## Methodology<a name="meth"></a>
 
-### Implementation & Techniques Used
+### Data Preprocessing & Implementation
 
-During the setup phase of the application, the dataset is transformed using the TF-IDF vectorization technique, removing the stopwords and tokenizing the texts, to generate the word vector features along with their scores. The vector model and the corresponding matrix generated using the dataset is then saved for future use.
+In the setup phase of the application, the following steps are executed for the recommendations:
 
-Given a paper abstract, a new piece of text provided by the user through an HTML form, the program then loads the saved vector model and the matrix to fit the new piece of text with it. This generates another TF-IDF matrix for the words in the text.
-Using cosine similarity on the matrices, the saved and the newly generated one, top N indices are computed. The indices are then used to find the metadata of the paper which are then sent back as a JSON response to be displayed as an HTML list.
+1. Load dataset
+2. Filter the data limiting to articles published after the year 2019 (at most 100,000 papers)
+3. Transform the data to add in general category
+4. Use general category to add dummy columns
+5. Compute and save the TF-IDF vectorizer and matrix built using the abstracts
+6. Save the dataset
+
+Next, to predict categories, the following steps are executed:
+
+1. Split dataset into training and test sets
+2. Build a LinearSVC classifier pipeline to predict categories using OneVsRest classifier
+3. Use grid search CV technique to fit the model on the best parameters
+4. Save the model
+
+This completes the preprocessing of the data. Finally, the index route can be loaded in the browser to test the application out. Provide an abstract in the input field and click on "Search" to get the similar article recommendations and the predicted categories of the text. This is done sequentially as follows:
+
+1. Load the saved dataset, vectorizer and the TF-IDF matrix
+2. Build another vectorizer using the saved vectorizer's vocabulary
+3. Compute TF-IDF matrix for the abstract
+4. Using cosine similarity method, build a list of indices sorted by best match
+5. Fetch metadata from saved dataset and send back the list to the web server
+6. Load the saved model
+7. Make predictions
+8. Send back the list of categories associated with the abstract
+
+The response then contains the similar articles list and the categories list which then is compiled using JavaScript to display it on the web page.
+
+### Refinement
+
+asdasd
 
 ## Results<a name="res"></a>
 
 ### Model Evaluation and Validation
 
-Using a validation script taking a sample size of 200 and threshold score of 0.40, the following results are observed:
+To categorize the abstract, a Linear SVC model is used where the grid search CV technique found the best parameters as following:
 
-* ~4 'quality' articles are found for each item in the test set.
-* it takes on an average ~2 seconds to find the articles for one abstract.
-* ~60% articles in the sample have no related articles.
+* a
+* b
 
-This report can be generated using the web application itself by navigating to the route: `/report`.
+The model is split into training and testing set. The latter is then used to validate the model, computing the precision, recall and f1-score. The metrics associated with some categories are shown in Fig. 5.
+
+![screenshot](./assets/category.png?raw=true "Fig. 4")
+
+**Fig. 5** Classification reports for categories math, physics and statistics.
 
 ### Justification
 
@@ -149,7 +174,7 @@ All in all, the project brings out its usefulness in a limited domain, but a bet
 
 ### Reflection
 
-Steps followed to generate the similar articles:
+Steps followed to find the similar articles:
 
 * Load dataset
 * Filter dataset to include the articles published after 2019 (at most 100,000)
@@ -162,6 +187,16 @@ Steps followed to generate the similar articles:
 * Cosine similarity technique generates the similarity score between each article and the abstract
 * Top N articles are then filtered from it
 
+Steps followed to predict the categories:
+
+* Load dataset
+* Split it into train-test sets
+* Build a Linear SVC classifier
+* Fit the grid search CV model on training set with the set of parameters
+* Save the resulting model
+* Load the saved model on event of new abstract
+* Predict using the model
+
 Learning about how TF-IDF works has been the most interesting part of this project, giving me insights as to how many NLP applications are based upon it. While it was mostly fun to bring this project to life, the hardest part was to understand how to save the preprocessed model and the matrix and finally apply it as needed when the user invokes the search query.
 
 ### Improvement
@@ -170,6 +205,8 @@ Looking back, there are a lot of improvements that can be done in this project, 
 
 * Extending this project to more than arXiv papers
 * Generating a graph to show the connection lengths based on their similarity scores
+* Enhance web application to take in user ratings over the search results
+* In case arXiv and other publications are used, then LDA scheme can be considered for topic modelling
 * Considering the title of the article along with the abstract
 * Using the categories as another dimension to sort the generated similar articles
 * Advanced filtering and sorting mechanisms for the web application
