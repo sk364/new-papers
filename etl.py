@@ -18,9 +18,12 @@ DATASET_FILE_PATH = "data/dataset.json"
 MATRIX_SAVE_PATH = "models/matrix.pkl"
 VECTORIZER_SAVE_PATH = "models/vectorizer.pkl"
 DATAFRAME_SAVE_PATH = "models/df.json"
+TEST_SAMPLE_SIZE = 200
+
 MIN_YEAR = 2019
 MAX_PAPERS = 100000
 NUM_TOP_ITEMS = 101
+THRESHOLD_SCORE = 0.40
 
 
 def tokenize(text):
@@ -161,6 +164,9 @@ def get_similar_papers(abstract):
     # build the results object with items' metadata
     similar_items = []
     for index in top_N_indices:
+        if similarities[0][index] < THRESHOLD_SCORE:
+            continue
+
         similar_items.append(dict(df.iloc[index, :]))
 
     return similar_items
