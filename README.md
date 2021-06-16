@@ -9,8 +9,11 @@ A recommendation and categorization application to categorize and suggest relate
 * [How to Run?](#run)
 * [Files](#files)
 * [Overview & Motivation](#overview)
+* [Problem Statement](#statement)
+* [Metrics](#metrics)
 * [Analysis](#analysis)
-* [Techniques](#tech)
+* [Methodology](#meth)
+* [Results](#res)
 * [Conclusion](#conclusion)
 * [Acknowledgements](#ack)
 
@@ -51,6 +54,24 @@ The following is the list of files hosted in this repository:
 A research paper is a piece of academic writing containing original research results or an interpretation of existing results. The papers, even just the abstract text, are many a times really long and complex to understand, in the first glance. Basically, it's a time-intensive process. While there are softwares which can auto-summarize articles, it still takes a good amount of effort to go through a vast number of articles to find which are related to the paper in question.
 
 This project attempts to solve the problem of sifting through a myriad number of articles to filter the relevant articles for the study, by exposing a web application in which the user can provide an abstract of an article to get a list of related articles. The application uses the [arXiv research paper dataset](https://www.kaggle.com/Cornell-University/arxiv) to perform content-based filtering to recommend the related articles.
+
+## Problem Statement<a name="statement"></a>
+
+The goal of the project is to create a web application to help users find similar articles, given a piece of text. The application is expected to be useful for conducting literature reviews, finding correlation between past researches and the user's own research, etc.
+
+## Metrics<a name="metrics"></a>
+
+The project evaluates the recommendations based on the criteria of score being greater than the set threshold.
+For this project, setting the threshold to 0.50 for a score ranging between 0 and 1 (both inclusive). Since all documents are compared with a single document, zero score documents will be filtered out and will not be considered as retrieved documents.
+
+To evaluate the application, a custom metric "quality" is used as there are no pre-existing ratings to judge the results using train-test approach in this knowledge-based recommendation engine.
+Using the above threshold value, `quality` of the search results is defined as the fraction of documents above threshold over the total number of documents.
+
+`Quality` = # of documents above threshold / total # of documents
+
+Another useful metric to evaluate the performance is the search time to find the similar articles.
+
+`Search time` = the number of seconds it takes to find and generate a list of articles (excluding the web processing delays).
 
 ## Analysis<a name="analysis"></a>
 
@@ -97,12 +118,32 @@ The above figure indicates that the submissions are skewed towards the recent da
 
 Most number of papers are tagged with Computer Science and Mathematics by a really great margin, followed by Condensed Matter and Physics, as shown in Fig. 4.
 
-## Techniques<a name="tech"></a>
+## Methodology<a name="meth"></a>
+
+### Implementation & Techniques Used
 
 During the setup phase of the application, the dataset is transformed using the TF-IDF vectorization technique, removing the stopwords and tokenizing the texts, to generate the word vector features along with their scores. The vector model and the corresponding matrix generated using the dataset is then saved for future use.
 
-Given a paper abstract, a new piece of text provided by the user, the program loads the saved vector model and the matrix to fit the new piece of text with it. This generates another TF-IDF matrix for the words in the text.
-Using cosine similarity on the matrices, the saved and the newly generated one, top N indices are computed.
+Given a paper abstract, a new piece of text provided by the user through an HTML form, the program then loads the saved vector model and the matrix to fit the new piece of text with it. This generates another TF-IDF matrix for the words in the text.
+Using cosine similarity on the matrices, the saved and the newly generated one, top N indices are computed. The indices are then used to find the metadata of the paper which are then sent back as a JSON response to be displayed as an HTML list.
+
+## Results<a name="res"></a>
+
+### Model Evaluation and Validation
+
+Using a validation script taking a sample size of 200 and threshold score of 0.40, the following results are observed:
+
+* ~4 'quality' articles are found for each item in the test set.
+* it takes on an average ~2 seconds to find the articles for one abstract.
+* ~60% articles in the sample have no related articles.
+
+This report can be generated using the web application itself by navigating to the route: `/report`.
+
+### Justification
+
+It can be seen that the application is useful to find good quality similar articles of their choice in a clean list view in a website mode. But, it is limited to arXiv papers with a smaller dataset size. It also has limitations to read in the mathJax format to fully comprehend the ignorance of important mathematical texts.
+
+All in all, the project brings out its usefulness in a limited domain, but a better infrastructure and upgradation of techniques along with a better webview shall provide a really good enhancement to find interesting papers.
 
 ## Conclusion<a name="conclusion"></a>
 
@@ -134,7 +175,7 @@ Looking back, there are a lot of improvements that can be done in this project, 
 * Advanced filtering and sorting mechanisms for the web application
 * Finding similar articles by inputting the link or the paper ID
 
-Also, using better hardware shall help process articles dating back to 20th century providing lots of missing studies that might be relevant to the user. While it takes ~5 seconds to search, it still could be reduced down using advanced caching system at the server side.
+Also, using better hardware shall help process articles dating back to 20th century providing lots of missing studies that might be relevant to the user. While it takes ~2 seconds to search, it still could be reduced down using advanced caching system at the server side.
 
 ## Acknowledgements<a name="ack"></a>
 
