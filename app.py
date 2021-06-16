@@ -6,6 +6,7 @@ from flask import Flask, render_template, request
 from etl import (
     setup,
     get_similar_papers,
+    get_categories,
     DATAFRAME_SAVE_PATH,
     TEST_SAMPLE_SIZE
 )
@@ -78,5 +79,9 @@ def search():
     data = []
     if abstract:
         data = get_similar_papers(abstract)
+        categories = get_categories(abstract)
 
-    return json.dumps(data)
+    return json.dumps({
+        'data': data,
+        'categories': categories
+    })

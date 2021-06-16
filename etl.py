@@ -13,17 +13,29 @@ from nltk.tokenize import word_tokenize
 from dask.bag import random
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 DATASET_FILE_PATH = "data/dataset.json"
 MATRIX_SAVE_PATH = "models/matrix.pkl"
 VECTORIZER_SAVE_PATH = "models/vectorizer.pkl"
 DATAFRAME_SAVE_PATH = "models/df.json"
+MODEL_SAVE_PATH = "models/model.pkl"
 TEST_SAMPLE_SIZE = 200
 
 MIN_YEAR = 2019
 MAX_PAPERS = 100000
 NUM_TOP_ITEMS = 101
 THRESHOLD_SCORE = 0.40
+
+ARXIV_GENERAL_CATEGORIES = [
+    'astro-ph', 'cond-mat', 'cs', 'econ', 'eess', 'gr-qc', 'hep-ex',
+    'hep-lat', 'hep-ph', 'hep-th', 'math', 'math-ph', 'nlin', 'nucl-ex',
+    'nucl-th', 'physics', 'q-bio', 'q-fin', 'quant-ph', 'stat'
+]
 
 
 def tokenize(text):
@@ -92,9 +104,14 @@ def filter_data(data):
             sample_size /= 10
 
 
-def clean_data(df):
-    """Cleans data, extracting the general category for
-    each category of an item"""
+def get_dummies(df):
+    """Returns list of dummy columns"""
+    return df.general_category.str.get_dummies(sep=' ')
+
+
+def transform_data(df):
+    """Transforms data, building general category, one-hot-encoding general
+    category and finally dropping the categories column"""
 
     df['general_category'] = df.categories.apply(
         lambda item: " ".join(
@@ -105,6 +122,13 @@ def clean_data(df):
             )
         )
     )
+
+    # concat dummy columns for general categories
+    dummies = get_dummies(df)
+    df = pd.concat([df, dummies], axis=1)
+
+    # drop `categories` column
+    df.drop(columns=['categories'], inplace=True)
 
     return df
 
@@ -139,6 +163,64 @@ def preprocess(df):
     save_dataset(df)
     save_vectorizer(tfidf_vect)
     save_matrix(tfidf_matrix)
+
+
+def train_classifier(df):
+    """
+    * Splits dataset into train-test datasets
+    * Builds a LinearSVC classifier for multilabel classificiation
+      using OneVsRest classification technique
+    * Apply grid search to find the best parameters for the model
+    """
+
+    dummies = get_dummies(df)
+    X = df['abstract']
+    y = df[dummies.columns]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+    param_grid = {
+        'vect__ngram_range': ((1, 1), (1, 2)),
+        'vect__max_df': (0.5, 0.75, 1.0),
+        'vect__max_features': (None, 5000, 10000),
+        'tfidf__use_idf': (True, False),
+        'clf__estimator__C': [1, 10, 100, 1000]
+    }
+
+    pipeline = Pipeline([
+        ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('tfidf', TfidfTransformer()),
+        ('clf', OneVsRestClassifier(LinearSVC()))
+    ])
+
+    cv = GridSearchCV(pipeline, param_grid=param_grid)
+
+    cv.fit(X_train, y_train)
+
+    return cv, (X_test, y_test)
+
+
+def evaluate_model(model, X_test, y_test):
+    """Evaluates model printing the classification report for each category"""
+
+    y_pred = model.predict(X_test)
+
+    for idx, column in enumerate(y_test.columns):
+        y_pred_values = y_pred[:, idx]
+        y_test_values = y_test[column]
+
+        print(f'Category: {column}')
+        print(classification_report(y_test_values, y_pred_values))
+        print()
+
+
+def get_categories(abstract):
+    """Outputs arXiv categories for the given `abstract`"""
+
+    model = joblib.load(MODEL_SAVE_PATH)
+    pred = model.predict(abstract)
+    categories = [ARXIV_GENERAL_CATEGORIES[pred_item] for pred_item in pred]
+    return categories
 
 
 def get_similar_papers(abstract):
@@ -187,13 +269,19 @@ def setup():
     documents = load_data_from_json(DATASET_FILE_PATH)
 
     df = filter_data(documents)
-    df = clean_data(df)
+    df = transform_data(df)
 
     print("Saving processed data...")
     preprocess(df)
 
-    print("Successfully saved data in `models` directory")
-    print(f"Took {time.time() - start_time} seconds")
+    print("Fitting model...")
+    model, test_set = train_classifier(df)
+    joblib.dump(model, MODEL_SAVE_PATH)
+
+    print("Evaluating model...")
+    evaluate_model(model, test_set[0], test_set[1])
+
+    print(f"Done! Took {time.time() - start_time} seconds.")
 
 
 if __name__ == "__main__":
