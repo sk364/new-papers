@@ -146,6 +146,8 @@
         $('.num-papers').text(`Showing ${papers.length} similar papers (best match first):`);
         $('.error').hide();
       } else {
+        $('.paper-list').hide();
+        $('.num-papers').text('');
         $('.error').show();
         $('.error').text('The search yielded no papers!');
       }
@@ -178,6 +180,8 @@
           cache[abstractText] = papers;
         },
         error: (err) => {
+          $('.paper-list').hide();
+          $('.num-papers').text('');
           $('.error').show();
           $('.error').text("Something went wrong! Please try again later...");
         }
