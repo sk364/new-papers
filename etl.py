@@ -18,6 +18,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import LinearSVC
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.metrics import classification_report
 
 DATASET_FILE_PATH = "data/dataset.json"
 MATRIX_SAVE_PATH = "models/matrix.pkl"
@@ -27,9 +28,8 @@ MODEL_SAVE_PATH = "models/model.pkl"
 TEST_SAMPLE_SIZE = 200
 
 MIN_YEAR = 2019
-MAX_PAPERS = 100000
+MAX_PAPERS = 10000
 NUM_TOP_ITEMS = 101
-THRESHOLD_SCORE = 0.40
 
 ARXIV_GENERAL_CATEGORIES = [
     'astro-ph', 'cond-mat', 'cs', 'econ', 'eess', 'gr-qc', 'hep-ex',
@@ -218,8 +218,11 @@ def get_categories(abstract):
     """Outputs arXiv categories for the given `abstract`"""
 
     model = joblib.load(MODEL_SAVE_PATH)
-    pred = model.predict(abstract)
-    categories = [ARXIV_GENERAL_CATEGORIES[pred_item] for pred_item in pred]
+    pred = model.predict([abstract])
+    categories = [
+        ARXIV_GENERAL_CATEGORIES[i] for i, pred_item in enumerate(pred[0])
+        if pred_item == 1
+    ]
     return categories
 
 
@@ -246,9 +249,6 @@ def get_similar_papers(abstract):
     # build the results object with items' metadata
     similar_items = []
     for index in top_N_indices:
-        if similarities[0][index] < THRESHOLD_SCORE:
-            continue
-
         similar_items.append(dict(df.iloc[index, :]))
 
     return similar_items
