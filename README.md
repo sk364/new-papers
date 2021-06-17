@@ -102,13 +102,13 @@ It can be seen in Fig. 2 that the abstract contains characters relevant in displ
 
 ![screenshot](./assets/submission.png?raw=true "Fig. 3")
 
-**Fig. 3** A plot showing the number of submissions by submission date
+**Fig. 3** A plot showing the number of submissions by submission date.
 
 The above figure indicates that the submissions are skewed towards the recent dates.
 
 ![screenshot](./assets/category.png?raw=true "Fig. 4")
 
-**Fig. 4** A plot showing the percentage of papers by general category
+**Fig. 4** A plot showing the percentage of papers by general category, as observed in a sample of 10,000 articles
 
 Most number of papers are tagged with Computer Science and Mathematics by a really great margin, followed by Condensed Matter and Physics, as shown in Fig. 4.
 
@@ -147,7 +147,26 @@ The response then contains the similar articles list and the categories list whi
 
 ### Refinement
 
-asdasd
+[GridSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) is used for hypertuning the parameters to build the model with the best parameters. The list of parameters used are as following:
+
+* tfidf__use_idf: Use Inverse-Document Refetching while TF-IDF transformation or not
+* vect__ngram_range: If words will be unigrams or bigrams, etc or a hybrid mix of n-grams.
+* vect__max_df: while building vocabulary, the score of terms higher than this will be ignored
+* vect__max_features: capping the number of features
+* clf__estimator__C: regularization parameter
+
+The following parameters grid is used:
+
+```python
+# python
+{
+    'vect__ngram_range': ((1, 1), (1, 2)),
+    'vect__max_df': (0.5, 0.75, 1.0),
+    'vect__max_features': (None, 5000, 10000),
+    'tfidf__use_idf': (True, False),
+    'clf__estimator__C': [1, 10, 100, 1000]
+}
+```
 
 ## Results<a name="res"></a>
 
@@ -155,14 +174,59 @@ asdasd
 
 To categorize the abstract, a Linear SVC model is used where the grid search CV technique found the best parameters as following:
 
-* a
-* b
+* Use TF-IDF transformer's Inverse-Document frequency reweighting (param: `use_idf` = True)
+* Set Linear SVC classifier's regularization parameter `C` to 100.
+* Ignore TF-IDF score less than 0.5.
+* Set parameter `ngram_range` to (1, 2), considering both unigrams and bigrams.
 
-The model is split into training and testing set. The latter is then used to validate the model, computing the precision, recall and f1-score. The metrics associated with some categories are shown in Fig. 5.
+The model is split into training and testing set. The latter is then used to validate the model, computing the precision, recall and f1-score. The metrics associated with some categories are as following:
 
-![screenshot](./assets/category.png?raw=true "Fig. 4")
+```
+1. Category: cs
+              precision    recall  f1-score   support
+
+           0       0.95      0.92      0.93      1212
+           1       0.88      0.92      0.90       788
+
+    accuracy                           0.92      2000
+   macro avg       0.91      0.92      0.92      2000
+weighted avg       0.92      0.92      0.92      2000
+--
+
+2. Category: math
+              precision    recall  f1-score   support
+
+           0       0.94      0.95      0.95      1451
+           1       0.87      0.83      0.85       549
+
+    accuracy                           0.92      2000
+   macro avg       0.91      0.89      0.90      2000
+weighted avg       0.92      0.92      0.92      2000
+--
+
+3. Category: physics
+              precision    recall  f1-score   support
+
+           0       0.94      0.98      0.96      1791
+           1       0.68      0.45      0.54       209
+
+    accuracy                           0.92      2000
+   macro avg       0.81      0.71      0.75      2000
+weighted avg       0.91      0.92      0.91      2000
+```
+
 
 **Fig. 5** Classification reports for categories math, physics and statistics.
+
+Percentage of articles tagged in actual test set and predicted values have pretty much the same shape and values as shown in Fig. 6 and Fig. 7.
+
+![screenshot](./assets/results-actual.png?raw=true "Fig. 6")
+
+**Fig. 6** Bar graph showing percentage of articles tagged with the 'actual' categories
+
+![screenshot](./assets/results-pred.png?raw=true "Fig. 7")
+
+**Fig. 7** Bar graph showing percentage of articles tagged with the 'predicted' categories
 
 ### Justification
 
