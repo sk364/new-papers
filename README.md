@@ -56,9 +56,11 @@ A research paper is a piece of academic writing containing original research res
 
 This project attempts to solve the problem of sifting through a myriad number of articles to filter the relevant articles for the study, by exposing a web application in which the user can provide an abstract of an article to get a list of related articles and the categories associated to it. The application uses the [arXiv research paper dataset](https://www.kaggle.com/Cornell-University/arxiv) to perform knowledge-based recommendations.
 
+To provide a brief summary of the underlying approach taken in this project, the solution uses the TF-IDF (term frequency-inverse document frequency) transformation on the tokens, reflecting the importance of the word in the abstract with respect to the entire collection of abstracts. A one v/s rest multilabel support vector classifier is then used to output the categories associated with the abstract. As to finding the recommendations, cosine similarity technique, taking a cosine angle between the two vectors, is used to find document similarity using the TF-IDF vector of each document, where greater the angle, better the similarity.
+
 ## Problem Statement<a name="statement"></a>
 
-The goal of the project is to create a web application to help users find similar articles and the associated categories, given a piece of text. The application is expected to be useful for conducting literature reviews, finding correlation between past researches and the user's own research, etc.
+The goal of the project is to create a web application to help users find similar articles and the associated categories, given a piece of text using TF-IDF transformations, linear kernel bound support vector classifier and cosine similarity techniques. The application is expected to be useful for conducting literature reviews, finding correlation between past researches and the user's own research, etc.
 
 ## Metrics<a name="metrics"></a>
 
