@@ -230,7 +230,9 @@ Percentage of articles tagged in actual test set and predicted values have prett
 
 ### Justification
 
-It can be seen that the application is useful to find good quality similar articles of their choice in a clean list view in a website mode. But, it is limited to arXiv papers with a smaller dataset size. It also has limitations to read in the mathJax format to fully comprehend the ignorance of important mathematical texts.
+The project is able to successfully implement text mining using TF-IDF and Linear SVC to categorize over multiple categories. While the precision, recall and f1-score for each category was greater than 90%, there is still room for improvement.
+
+It is also evident that the application is useful to find similar articles in a clean and compact list view. But, it is limited to arXiv papers with a smaller dataset size. It also has limitations to read in the mathJax format to fully comprehend the ignorance of important mathematical texts.
 
 All in all, the project brings out its usefulness in a limited domain, but a better infrastructure and upgradation of techniques along with a better webview shall provide a really good enhancement to find interesting papers.
 
