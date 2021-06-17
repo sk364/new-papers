@@ -249,7 +249,13 @@ def get_similar_papers(abstract):
     # build the results object with items' metadata
     similar_items = []
     for index in top_N_indices:
-        similar_items.append(dict(df.iloc[index, :]))
+        obj = dict(df.iloc[index, :])
+        similar_items.append({
+            "id": obj['id'],
+            "title": obj['title'],
+            "abstract": obj['abstract'],
+            "general_category": obj["general_category"]
+        })
 
     return similar_items
 
