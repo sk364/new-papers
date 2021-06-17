@@ -276,7 +276,7 @@ Looking back, there are a lot of improvements that can be done in this project, 
 * Advanced filtering and sorting mechanisms for the web application
 * Finding similar articles by inputting the link or the paper ID
 
-Also, using better hardware shall help process articles dating back to 20th century providing lots of missing studies that might be relevant to the user. While it takes ~2 seconds to search, it still could be reduced down using advanced caching system at the server side.
+Also, having more memory and better processing power shall help process articles dating back to 20th century providing lots of missing studies that might be relevant to the user.
 
 ## Acknowledgements<a name="ack"></a>
 
