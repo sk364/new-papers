@@ -36,6 +36,7 @@ Install all libraries using this command: `pip install -r requirements.txt`.
 * Download the dataset from [here](https://www.kaggle.com/Cornell-University/arxiv) and move it inside the `data` directory naming it `dataset.json`.
 * Run the application: `flask run`
 * Go to `http://localhost:5000/setup` to setup the data models.
+* After running setup, the classification report is available to analyze in the console.
 * Now, navigate to `http://localhost:5000/` and the app is ready to serve!
 
 ## Files<a name="files"></a>
