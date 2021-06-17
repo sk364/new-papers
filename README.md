@@ -64,7 +64,7 @@ The goal of the project is to create a web application to help users find simila
 
 ## Metrics<a name="metrics"></a>
 
-The project evaluates the model on `precision`, `recall` and `f1 score`, where
+Since there are more true negatives than there are true positives, there is a class imbalance for which accuracy will not be a desired metric. Precision and recall are relatively insensitive to such imbalances. Further, F1 score is analyzed to seek a balance between precision and recall. Hence, the project evaluates the model on `precision`, `recall` and `f1 score`, where
 
 * Precision = True Positives / (True Positives + False Positives)
 * Recall = True Positives / (True Positives + False Negatives)
