@@ -31,8 +31,26 @@ def compute_sentence_embeddings(model, sentences):
   return model.encode_sentences(sentences, combine_strategy="mean")
 
 
-def most_similar(doc_id, similarity_matrix):
-  return np.argsort(similarity_matrix[doc_id])[::-1]
+def get_most_similar_docs(abstract):
+  """
+  Returns the most similar documents using cosine similarity of the saved abstract embeddings
+  and the given `abstract`
+
+  Args:
+    - abstract: `str`
+
+  Returns:
+    - data frame of most similar documents: `pd.DataFrame`
+  """
+
+  df = read_data(SAVED_DF_PATH)
+  model = init_model()
+  abstract_embedding = compute_sentence_embeddings(model, [abstract])[0]
+  sentence_embeddings = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
+  similarity_matrix = cosine_similarity(sentence_embeddings, [abstract_embedding])
+  most_similar_documents = np.argsort(similarity_matrix.reshape(df.shape[0]))[::-1]
+
+  return df[df.index.isin(most_similar_documents)]
 
 
 if __name__ == "__main__":
@@ -51,11 +69,8 @@ if __name__ == "__main__":
     print("[INFO] computing embeddings...")
     sentence_embeddings = compute_sentence_embeddings(model, abstracts)
 
-    print("[INFO] computing similarities...")
-    similarities = cosine_similarity(sentence_embeddings)
-
-    print("[INFO] saving similarity matrix...")
-    joblib.dump(similarities, SIMILARITY_MATRIX_SAVE_PATH)
+    print("[INFO] saving sentence embeddings...")
+    joblib.dump(sentence_embeddings, SIMILARITY_MATRIX_SAVE_PATH)
   elif operation == "most_similar":
     document_id = 0 if len(args) < 4 else int(args[3])
     print(f"[INFO] processing document #{document_id}")
@@ -67,10 +82,11 @@ if __name__ == "__main__":
     abstract = document['abstract'][0]
 
     abstract_embedding = compute_sentence_embeddings(model, [abstract])[0]
+    sentence_embeddings = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
+    similarity_matrix = cosine_similarity(sentence_embeddings, [abstract_embedding])
 
     print("[INFO] finding similar documents...")
-    similarity_matrix = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
-    most_similar_documents = most_similar(document_id, similarity_matrix)
+    most_similar_documents = np.argsort(similarity_matrix)[::-1]
 
     print(f'[INFO] found {len(most_similar_documents)} documents:')
     print(", ".join([str(doc_id) for doc_id in most_similar_documents]))
