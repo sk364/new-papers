@@ -28,7 +28,7 @@ def compute_sentence_embeddings(model, sentences):
 
 def get_most_similar_docs(df, model, embeddings, abstract, top_k=10):
   query_embedding = model.encode(abstract, convert_to_tensor=True)
-  search_hits = util.semantic_search(abstract, embeddings, top_k=top_k)[0]
+  search_hits = util.semantic_search(query_embedding, embeddings, top_k=top_k)[0]
   papers = []
 
   for hit in search_hits:
@@ -75,6 +75,6 @@ if __name__ == "__main__":
     abstract = document["abstract"][0]
 
     sentence_embeddings = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
-    similar_papers = compute_sentence_embeddings(df, model, sentence_embeddings, abstract, top_k=TOP_K)[0]
+    similar_papers = get_most_similar_docs(df, model, sentence_embeddings, abstract, top_k=TOP_K)[0]
 
     print(similar_papers)
