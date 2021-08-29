@@ -130,7 +130,7 @@
     const getPaperItem = (paper, isLastItem) => {
       const liEl = $('<li class="item"></li>');
 
-      const categories = paper.general_category.split(' ').map(it => { return `#${it}`; }).join(" ");
+      const categories = paper.general_category.split(' ').map(it => `#${it}`).join(" ");
 
       liEl.append($(`<div style="inline-flex">
         <a class="item-id" href="https://arxiv.org/abs/${paper.id}" target="_blank">${paper.id}</a>
