@@ -1,56 +1,47 @@
 import sys
-import numpy as np
-import pandas as pd
 import joblib
 
-from simpletransformers.language_representation import RepresentationModel
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+import pandas as pd
+from sentence_transformers import SentenceTransformer, util
 
-
-SIMILARITY_MATRIX_SAVE_PATH = "models/similarities.pkl"
+SIMILARITY_MATRIX_SAVE_PATH = "models/embeddings.pkl"
 SAVED_DF_PATH = "models/df.json"
+TOP_K = 15
+MODEL_NAME = "allenai/scibert_scivocab_uncased"
 
 
 def read_data(data_file_path):
   return pd.read_json(data_file_path, orient="index")
 
 
-def get_abstracts(df):
-  return df['abstract']
+def get_title_abstracts(df):
+  return [paper["title"] + "[SEP]" + paper["abstract"] for idx, paper in df.iterrows()]
 
 
 def init_model():
-  return RepresentationModel(
-    model_type="bert",
-    model_name="bert-base-uncased",
-    use_cuda=False
-  )
+  return SentenceTransformer(MODEL_NAME)
 
 
 def compute_sentence_embeddings(model, sentences):
-  return model.encode_sentences(sentences, combine_strategy="mean")
+  return model.encode(sentences, convert_to_tensor=True)
 
 
-def get_most_similar_docs(abstract):
-  """
-  Returns the most similar documents using cosine similarity of the saved abstract embeddings
-  and the given `abstract`
+def get_most_similar_docs(df, model, embeddings, abstract, top_k=10):
+  query_embedding = model.encode(abstract, convert_to_tensor=True)
+  search_hits = util.semantic_search(abstract, embeddings, top_k=top_k)[0]
+  papers = []
 
-  Args:
-    - abstract: `str`
+  for hit in search_hits:
+    paper = df.iloc[hit["corpus_id"], :]
+    papers.append({
+      "score": hit["score"],
+      "id": paper["id"],
+      "title": paper["title"],
+      "abstract": paper["abstract"],
+      "general_category": paper["general_category"]
+    })
 
-  Returns:
-    - data frame of most similar documents: `pd.DataFrame`
-  """
-
-  df = read_data(SAVED_DF_PATH)
-  model = init_model()
-  abstract_embedding = compute_sentence_embeddings(model, [abstract])[0]
-  sentence_embeddings = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
-  similarity_matrix = cosine_similarity(sentence_embeddings, [abstract_embedding])
-  most_similar_documents = np.argsort(similarity_matrix.reshape(df.shape[0]))[::-1]
-
-  return df[df.index.isin(most_similar_documents)]
+  return papers
 
 
 if __name__ == "__main__":
@@ -59,34 +50,31 @@ if __name__ == "__main__":
   operation = "process" if len(args) < 2 else "most_similar"
   df_path = SAVED_DF_PATH if len(args) < 3 else args[2]
 
-
   if operation == "process":
     print(f"[INFO] reading data from {df_path}")
     df = read_data(df_path)
-    abstracts = get_abstracts(df)
+    title_abstracts = get_title_abstracts(df)
     model = init_model()
 
     print("[INFO] computing embeddings...")
-    sentence_embeddings = compute_sentence_embeddings(model, abstracts)
+    sentence_embeddings = compute_sentence_embeddings(model, title_abstracts)
 
     print("[INFO] saving sentence embeddings...")
     joblib.dump(sentence_embeddings, SIMILARITY_MATRIX_SAVE_PATH)
-  elif operation == "most_similar":
-    document_id = 0 if len(args) < 4 else int(args[3])
-    print(f"[INFO] processing document #{document_id}")
 
+  elif operation == "most_similar":
     print(f"[INFO] reading data from {df_path}")
+
+    document_id = 0 if len(args) < 4 else int(args[3])
+
+    print(f"[INFO] processing document #{document_id}")
     df = read_data(df_path)
     model = init_model()
+
     document = df[df.index == document_id]
-    abstract = document['abstract'][0]
+    abstract = document["abstract"][0]
 
-    abstract_embedding = compute_sentence_embeddings(model, [abstract])[0]
     sentence_embeddings = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
-    similarity_matrix = cosine_similarity(sentence_embeddings, [abstract_embedding])
+    similar_papers = compute_sentence_embeddings(df, model, sentence_embeddings, abstract, top_k=TOP_K)[0]
 
-    print("[INFO] finding similar documents...")
-    most_similar_documents = np.argsort(similarity_matrix)[::-1]
-
-    print(f'[INFO] found {len(most_similar_documents)} documents:')
-    print(", ".join([str(doc_id) for doc_id in most_similar_documents]))
+    print(similar_papers)
