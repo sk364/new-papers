@@ -42,16 +42,7 @@ def filter_data(data):
         'abstract': item['abstract']
     }
 
-    sample_size = MAX_PAPERS
-    while sample_size != 0:
-        try:
-            return pd.DataFrame(
-                random.sample(
-                    data.filter(filter_lambda).map(trim_lambda), sample_size
-                ).compute()
-            )
-        except:
-            sample_size /= 10
+    return pd.DataFrame(data.filter(filter_lambda).map(trim_lambda))
 
 
 def get_dummies(df):
