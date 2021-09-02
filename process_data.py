@@ -4,10 +4,10 @@ import joblib
 import pandas as pd
 from sentence_transformers import SentenceTransformer, util
 
-SIMILARITY_MATRIX_SAVE_PATH = "models/embeddings.pkl"
+SIMILARITY_MATRIX_SAVE_PATH = "colab-files/embeddings-allenai-specter.pkl"
 SAVED_DF_PATH = "models/df.json"
 TOP_K = 15
-MODEL_NAME = "allenai/scibert_scivocab_uncased"
+MODEL_NAME = "allenai/specter"
 
 
 def read_data(data_file_path):
@@ -38,7 +38,7 @@ def get_most_similar_docs(df, model, embeddings, abstract, top_k=10):
       "id": paper["id"],
       "title": paper["title"],
       "abstract": paper["abstract"],
-      "general_category": paper["general_category"]
+      # "general_category": paper["general_category"
     })
 
   return papers
@@ -72,9 +72,9 @@ if __name__ == "__main__":
     model = init_model()
 
     document = df[df.index == document_id]
-    abstract = document["abstract"][0]
+    abstract = document["abstract"][document_id]
 
     sentence_embeddings = joblib.load(SIMILARITY_MATRIX_SAVE_PATH)
-    similar_papers = get_most_similar_docs(df, model, sentence_embeddings, abstract, top_k=TOP_K)[0]
+    similar_papers = get_most_similar_docs(df, model, sentence_embeddings, abstract, top_k=TOP_K)
 
     print(similar_papers)
